@@ -1,30 +1,26 @@
-FROM python:3.12-slim
+FROM python:3.11-slim
 
-# System dependencies required by Camoufox/Firefox
+# 1. Системные зависимости Linux для работы Firefox / Playwright
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    libgtk-3-0 \
-    libasound2 \
-    libx11-xcb1 \
-    libxcomposite1 \
-    libxdamage1 \
-    libxrandr2 \
-    libgbm1 \
-    libpango-1.0-0 \
-    libcairo2 \
-    libatk1.0-0 \
-    libatk-bridge2.0-0 \
-    libxshmfence1 \
-    libdbus-glib-1-2 \
-    xvfb \
+    curl wget libglib2.0-0 libnss3 libatk1.0-0 libatk-bridge2.0-0 \
+    libcups2 libdrm2 libdbus-1-3 libxcb1 libxkbcommon0 libx11-6 \
+    libxcomposite1 libxdamage1 libxext6 libxfixes3 librandr2 \
+    libgbm1 libpango-1.0-0 libcairo2 libasound2 \
     && rm -rf /var/lib/apt/lists/*
 
-RUN pip install --no-cache-dir camoufox[geoip]
+# 2. Фиксируем пути и вывод логов
+ENV PYTHONUNBUFFERED=1 \
+    PLAYWRIGHT_BROWSERS_PATH=/ms-playwright
 
-# Fetch browser binaries and addons
+WORKDIR /app
+
+# 3. Устанавливаем Camoufox и Playwright
+RUN pip install --no-cache-dir "camoufox[geoip]" playwright
+
+# 4. Предварительно скачиваем бинарники браузера прямо при сборке образа
 RUN python -m camoufox fetch
-
-COPY start.py /app/start.py
 
 EXPOSE 9222
 
-CMD ["python", "/app/start.py"]
+# 5. Запускаем нативный встроенный WebSocket-сервер Camoufox
+CMD ["python", "-m", "camoufox", "server", "--host", "0.0.0.0", "--port", "9222"]
