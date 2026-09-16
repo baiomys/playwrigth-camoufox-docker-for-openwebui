@@ -14,7 +14,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 RUN pip install --no-cache-dir \
     "camoufox[geoip]" \
-    "playwright==1.62.0"
+    "playwright==1.60.0"
 
 RUN playwright install-deps firefox \
     && python -m camoufox fetch
